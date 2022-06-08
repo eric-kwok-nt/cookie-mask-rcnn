@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+
+  name: fastapi-server-eric-kwok-svc
+
+spec:
+  ports:
+  - port: 8080
+  selector:
+
+    app: fastapi-server-eric-kwok
+

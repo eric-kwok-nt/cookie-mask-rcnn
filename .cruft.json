@@ -1,0 +1,23 @@
+{
+  "template": "https://github.com/aimakerspace/ml-project-cookiecutter-gcp",
+  "commit": "547ccc3c8a15d8728700ded8f76102d39cfd71eb",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "mask rcnn training",
+      "description": "to train maskrcnn",
+      "repo_name": "mask-rcnn-training",
+      "src_package_name": "mask_rcnn_training",
+      "src_package_name_short": "mrt",
+      "gcp_project_id": "cvhub-312105",
+      "gcr_personal_subdir": "Yes",
+      "author_name": "eric_kwok",
+      "open_source_license": "MIT",
+      "_copy_without_render": [
+        "aisg-context/polyaxon/polyaxonfiles"
+      ],
+      "_template": "https://github.com/aimakerspace/ml-project-cookiecutter-gcp"
+    }
+  },
+  "directory": null
+}

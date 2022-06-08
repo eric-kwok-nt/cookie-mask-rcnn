@@ -1,0 +1,23 @@
+data_prep:
+  raw_dirs_paths:
+    - "../mask-rcnn-training-data/raw/subdir1"
+  processed_data_path: "../mask-rcnn-training-data/processed/subdir"
+
+train:
+  setup_mlflow: false
+  mlflow_autolog: false
+  mlflow_tracking_uri: "mlflow-nginx-server-svc.polyaxon-v1.svc.local"
+  mlflow_exp_name: "mask-rcnn-training"
+  mlflow_artifact_location: "gs://mask-rcnn-training-artifacts/mlflow-tracking-server"
+  data_path: "../mask-rcnn-training-data/processed/subdir"
+  val_split: 0.2
+  bs: 32
+  seed: 4002
+  epochs: 3
+  optimiser: "adam"
+  metric: "accuracy"
+  pretrained_embedding: "https://tfhub.dev/google/nnlm-en-dim128-with-normalization/2"
+
+inference:
+  model_path: "./models/model-dir"
+  input_data_dir: "../mask-rcnn-training-data/processed/subdir"
