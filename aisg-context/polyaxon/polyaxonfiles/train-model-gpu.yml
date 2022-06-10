@@ -74,24 +74,24 @@ run:
     image: "{{ DOCKER_IMAGE }}"
     imagePullPolicy: IfNotPresent
     workingDir: "{{ WORKING_DIR }}"
-    command: ["/bin/bash","-c"]
+    command: ["/bin/bash", "-c"]
     args: [
-      "source ~/.bashrc &&
-      python src/train_model.py
-      train.setup_mlflow={{ SETUP_MLFLOW }}
-      train.mlflow_autolog={{ MLFLOW_AUTOLOG }}
-      train.mlflow_tracking_uri={{ MLFLOW_TRACKING_URI }}
-      train.mlflow_exp_name={{ MLFLOW_EXP_NAME }}
-      train.data_path={{ INPUT_DATA_DIR }}"
-    ]
+        "source ~/.bashrc &&
+        python src/train_model.py
+        train.setup_mlflow={{ SETUP_MLFLOW }}
+        train.mlflow_autolog={{ MLFLOW_AUTOLOG }}
+        train.mlflow_tracking_uri={{ MLFLOW_TRACKING_URI }}
+        train.mlflow_exp_name={{ MLFLOW_EXP_NAME }}
+        train.data_path={{ INPUT_DATA_DIR }}",
+      ]
     resources:
       requests:
-        memory: "8Gi"
-        cpu: "3"
+        memory: "32Gi"
+        cpu: "16"
         nvidia.com/gpu: 1
       limits:
-        memory: "8Gi"
-        cpu: "3"
+        memory: "32Gi"
+        cpu: "16"
         nvidia.com/gpu: 1
     volumeMounts:
       - name: gcp-service-account

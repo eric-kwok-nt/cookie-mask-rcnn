@@ -10,13 +10,13 @@ train:
   mlflow_exp_name: "mask-rcnn-training"
   mlflow_artifact_location: "gs://mask-rcnn-training-artifacts/mlflow-tracking-server"
   data_path: "../mask-rcnn-training-data/processed/subdir"
-  val_split: 0.2
-  bs: 32
-  seed: 4002
+  backbone: "resnet101"
+  trainable_layers: 3
+  bs: 12
+  prefetch_factor: 2
+  # seed: 4002
   epochs: 3
-  optimiser: "adam"
-  metric: "accuracy"
-  pretrained_embedding: "https://tfhub.dev/google/nnlm-en-dim128-with-normalization/2"
+  num_workers: 8
 
 inference:
   model_path: "./models/model-dir"

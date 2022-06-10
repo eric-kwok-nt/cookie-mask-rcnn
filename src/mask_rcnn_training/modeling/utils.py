@@ -1,44 +1,65 @@
 """Any miscellaneous utilities/functions to assist the model
 training workflow are to be contained here."""
 
-import os
+from pathlib import Path
 import hydra
-import tensorflow as tf
+import train_utils
+import torch
 
-def export_model(model):
-    """Serialises and exports the trained model.
+
+def export_model(args, train_data):
+    """Serialises and exports the trained weights with it training parameters.
 
     Parameters
     ----------
-    model : tf.keras.Model
-        Trained model.
+    args : dict
+        Dictionary containing the pipeline's configuration passed from
+        Hydra.
+    train_data : dict
+        model: Trained model,
+        optimizer: Trained optimizer,
+        lr_scheduler: Trained learning rate scheduler,
+        epoch: Current epoch,
     """
+    train_utils.save_on_master(
+        {
+            "model_state_dict": train_data["model"].state_dict(),
+            "optimizer": train_data["optimizer"].state_dict(),
+            "lr_scheduler": train_data["lr_scheduler"].state_dict(),
+            "epoch": train_data["epoch"],
+        },
+        Path(hydra.utils.get_original_cwd())
+        / "models/maskrcnn_{}_{}.pth".format(
+            args["train"]["backbone"], train_data["epoch"]
+        ),
+    )
 
-    model_file_path = os.path.\
-        join(hydra.utils.get_original_cwd(),
-            "models/text-classification-model")
 
-    model.save(model_file_path)
-
-
-def load_model(path_to_model):
+def load_model(path, model, optimizer=None):
     """Function to load the predictive model.
 
-    A sample utility function to be used for loading a Keras model
-    saved in 'SavedModel' format. This function can be customised
-    for more complex loading steps.
+    A utility function to be used for loading a PyTorch model / checkpoint
+    saved in '.pth' format.
 
     Parameters
     ----------
-    path_to_model : str
+    path : str
         Path to a directory containing a Keras model in
         'SavedModel' format.
+    model : torch.nn.Module
+        MaskRCNN model to be loaded
+    optimizer : (Optional) torch.optim.Optimizer
 
     Returns
     -------
-    Keras model instance
-        An object with the compiled model.
+    model : torch.nn.Module
+        Loaded model.
+    optimizer : (Optional) torch.optim.Optimizer
+        Loaded optimizer. Loaded if the input optimizer is not None.
     """
-
-    loaded_model = tf.keras.models.load_model(path_to_model)
-    return loaded_model
+    checkpoint = torch.load(path)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    if optimizer is not None:
+        optimizer.load_state_dict(checkpoint["optimizer"])
+        return model, optimizer
+    return model

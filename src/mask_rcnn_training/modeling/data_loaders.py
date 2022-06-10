@@ -1,11 +1,14 @@
 """This module contains functions that assist in loading datasets
 for the model training pipeline."""
 
-import os
-import tensorflow as tf
+from pathlib import Path
+import torch
+import train_utils as utils
+from coco_utils import get_coco
+import transforms as T
 
 
-def load_datasets(current_working_dir, args):
+def get_dataloader(current_working_dir, args):
     """Load datasets specified through YAML config.
 
     Paramaters
@@ -17,35 +20,53 @@ def load_datasets(current_working_dir, args):
     Returns
     -------
     dict
-        Dictionary object for which its values are "tf.data.Dataset"
+        Dictionary object for which its values are "torch.utils.data.DataLoader"
         objects.
     """
 
-    data_path = os.path.join(
-        current_working_dir, args["train"]["data_path"])
+    data_path = Path(current_working_dir) / args["data"]["data_path"]
 
-    train_ds = tf.keras.preprocessing.text_dataset_from_directory(
-        os.path.join(data_path, "train"),
+    trg_dataset = get_coco(
+        data_path,
+        "train",
+        transforms=_get_transform(train=True),
+        mode="instances",
+    )
+    trg_dataloader = torch.utils.data.DataLoader(
+        trg_dataset,
         batch_size=args["train"]["bs"],
-        validation_split=args["train"]["val_split"],
-        subset="training",
-        seed=args["train"]["seed"])
+        shuffle=True,
+        num_workers=args["train"]["num_workers"],
+        collate_fn=utils.collate_fn,
+        prefetch_factor=args["train"]["prefetch_factor"],
+    )
 
-    val_ds = tf.keras.preprocessing.text_dataset_from_directory(
-        os.path.join(data_path, "train"),
+    val_dataset = get_coco(
+        data_path,
+        "val",
+        transforms=_get_transform(train=False),
+        mode="instances",
+    )
+    val_dataloader = torch.utils.data.DataLoader(
+        val_dataset,
         batch_size=args["train"]["bs"],
-        validation_split=args["train"]["val_split"],
-        subset="validation",
-        seed=args["train"]["seed"])
+        shuffle=False,
+        num_workers=args["train"]["num_workers"],
+        collate_fn=utils.collate_fn,
+        prefetch_factor=args["train"]["prefetch_factor"],
+    )
 
-    test_ds = tf.keras.preprocessing.text_dataset_from_directory(
-        os.path.join(data_path, "test"),
-        batch_size=args["train"]["bs"])
-
-    datasets = {
-        "train": train_ds,
-        "val": val_ds,
-        "test": test_ds
+    dataloaders = {
+        "train": trg_dataloader,
+        "val": val_dataloader,
     }
 
-    return datasets
+    return dataloaders
+
+
+def _get_transform(train: bool):
+    transforms = []
+    transforms.append(T.ToTensor())
+    if train:
+        transforms.append(T.RandomHorizontalFlip(0.5))
+    return T.Compose(transforms)

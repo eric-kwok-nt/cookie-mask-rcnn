@@ -1,12 +1,13 @@
 """This module provides definitions of predictive models to be
 trained."""
 
-import tensorflow as tf
-import tensorflow_hub as hub
+from torchvision.ops import misc as misc_nn_ops
+from torchvision.models.detection import MaskRCNN
+from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
 
-def seq_model(args):
-    """Initialise a sequential model.
+def maskrcnn_model(args):
+    """Initialise a maskrcnn model.
 
     Paramaters
     ----------
@@ -16,22 +17,16 @@ def seq_model(args):
 
     Returns
     -------
-    tf.keras.Model
-        Compiled sequential model.
+    nn.Module
+        MaskRCNN model.
     """
 
-    hub_layer = hub.KerasLayer(
-        args["train"]["pretrained_embedding"], input_shape=[],
-        dtype=tf.string, trainable=True)
-
-    model = tf.keras.Sequential()
-    model.add(hub_layer)
-    model.add(tf.keras.layers.Dense(16, activation="relu"))
-    model.add(tf.keras.layers.Dense(1, activation="sigmoid"))
-
-    model.compile(
-        optimizer=args["train"]["optimiser"],
-        loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-        metrics=[args["train"]["metric"]])
+    backbone = resnet_fpn_backbone(
+        backbone_name=args["train"]["backbone"],
+        pretrained=True,
+        norm_layer=misc_nn_ops.FrozenBatchNorm2d,
+        trainable_layers=args["model"]["trainable_layers"],
+    )
+    model = MaskRCNN(backbone, num_classes=91)
 
     return model

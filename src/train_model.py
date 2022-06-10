@@ -2,9 +2,9 @@ import os
 import logging
 import hydra
 import mlflow
-
-
+import torch
 import mask_rcnn_training as mrt
+from mask_rcnn_training.modeling.train_engine import train_one_epoch, evaluate
 
 
 @hydra.main(config_path="../conf/base", config_name="pipelines.yml")
@@ -17,58 +17,74 @@ def main(args):
     - trains, evaluates, and then exports the model
     """
 
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     logger = logging.getLogger(__name__)
     logger.info("Setting up logging configuration.")
-    logger_config_path = os.path.\
-        join(hydra.utils.get_original_cwd(),
-            "conf/base/logging.yml")
+    logger_config_path = os.path.join(
+        hydra.utils.get_original_cwd(), "conf/base/logging.yml"
+    )
     mrt.general_utils.setup_logging(logger_config_path)
 
-    mlflow_init_status, mlflow_run = mrt.general_utils.\
-        mlflow_init(
-            args, setup_mlflow=args["train"]["setup_mlflow"],
-            autolog=args["train"]["mlflow_autolog"])
-    mrt.general_utils.\
-        mlflow_log(
-            mlflow_init_status, "log_params",
-            params=args["train"])
+    mlflow_init_status, mlflow_run = mrt.general_utils.mlflow_init(
+        args,
+        setup_mlflow=args["train"]["setup_mlflow"],
+        autolog=args["train"]["mlflow_autolog"],
+    )
+    mrt.general_utils.mlflow_log(mlflow_init_status, "log_params", params=args["train"])
 
     if "POLYAXON_RUN_UUID" in os.environ:
-        mrt.general_utils.\
-            mlflow_log(
-                mlflow_init_status, "log_param",
-                key="polyaxon_run_uuid",
-                value=os.environ["POLYAXON_RUN_UUID"])
+        mrt.general_utils.mlflow_log(
+            mlflow_init_status,
+            "log_param",
+            key="polyaxon_run_uuid",
+            value=os.environ["POLYAXON_RUN_UUID"],
+        )
 
-    datasets = mrt.modeling.data_loaders.\
-        load_datasets(hydra.utils.get_original_cwd(), args)
+    datasets = mrt.modeling.data_loaders.get_dataloader(
+        hydra.utils.get_original_cwd(), args
+    )
 
-    model = mrt.modeling.models.seq_model(args)
+    model = mrt.modeling.models.maskrcnn_model(args)
+    model.to(device)
+    model.train()
 
+    params = [p for p in model.parameters() if p.requires_grad]
+
+    optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
     logger.info("Training the model...")
-    model.fit(
-        datasets["train"],
-        epochs=args["train"]["epochs"],
-        validation_data=datasets["val"])
 
-    logger.info("Evaluating the model...")
-    test_loss, test_acc = model.evaluate(datasets["test"])
+    for epoch in range(args["train"]["epochs"]):
+        metric_logger = train_one_epoch(
+            model, optimizer, datasets["train"], device, epoch, print_freq=10
+        )
+        lr_scheduler.step()
+        mrt.general_utils.mlflow_log(
+            mlflow_init_status,
+            "log_params",
+            params=dict(
+                {"epoch": epoch, "lr": optimizer.param_groups[0]["lr"]},
+                **metric_logger.metrics,
+            ),
+        )
+        logger.info("Evaluating the model...")
+        evaluate(model, datasets["val"], device)
 
-    logger.info("Test Loss: {}, Test Accuracy: {}".\
-        format(test_loss, test_acc))
-
-    logger.info("Exporting the model...")
-    mrt.modeling.utils.export_model(model)
+        logger.info("Exporting the model...")
+        mrt.modeling.utils.export_model(model)
 
     if mlflow_init_status:
         artifact_uri = mlflow.get_artifact_uri()
         logger.info("Artifact URI: {}".format(artifact_uri))
-        mrt.general_utils.\
-            mlflow_log(
-                mlflow_init_status, "log_params",
-                params={"artifact_uri": artifact_uri})
-        logger.info("Model training with MLflow run ID {} has completed.".
-            format(mlflow_run.info.run_id))
+        mrt.general_utils.mlflow_log(
+            mlflow_init_status, "log_params", params={"artifact_uri": artifact_uri}
+        )
+        logger.info(
+            "Model training with MLflow run ID {} has completed.".format(
+                mlflow_run.info.run_id
+            )
+        )
         mlflow.end_run()
     else:
         logger.info("Model training has completed.")
