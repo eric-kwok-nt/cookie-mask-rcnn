@@ -171,3 +171,4 @@ venv.bak/
 .mypy_cache/
 
 ####################
+run_commands.sh
