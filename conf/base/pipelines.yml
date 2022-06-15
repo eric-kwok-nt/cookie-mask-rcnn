@@ -16,7 +16,7 @@ train:
   prefetch_factor: 2
   # seed: 4002
   epochs: 3
-  num_workers: 8
+  num_workers: 3
 
 inference:
   model_path: "./models/model-dir"

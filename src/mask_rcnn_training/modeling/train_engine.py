@@ -4,10 +4,10 @@ import time
 
 import torch
 import torchvision
-import train_utils as utils
+from . import train_utils as utils
 
-from coco_eval import CocoEvaluator
-from coco_utils import get_coco_api_from_dataset
+from .coco_eval import CocoEvaluator
+from .coco_utils import get_coco_api_from_dataset
 
 
 def train_one_epoch(

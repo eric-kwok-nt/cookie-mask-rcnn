@@ -3,7 +3,7 @@ training workflow are to be contained here."""
 
 from pathlib import Path
 import hydra
-import train_utils
+from . import train_utils
 import torch
 
 

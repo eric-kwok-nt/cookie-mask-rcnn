@@ -2,7 +2,7 @@ version: 1.1
 kind: component
 name: train-model-gpu
 description: Job for training a predictive model using GPU.
-tags: [model_training, keras, gpu]
+tags: [model_training, pytorch, gpu]
 inputs:
   - name: DOCKER_IMAGE
     isOptional: true
@@ -82,16 +82,17 @@ run:
         train.mlflow_autolog={{ MLFLOW_AUTOLOG }}
         train.mlflow_tracking_uri={{ MLFLOW_TRACKING_URI }}
         train.mlflow_exp_name={{ MLFLOW_EXP_NAME }}
-        train.data_path={{ INPUT_DATA_DIR }}",
+        train.data_path={{ INPUT_DATA_DIR }}
+        train.bs=2",
       ]
     resources:
       requests:
-        memory: "32Gi"
-        cpu: "16"
+        memory: "8Gi"
+        cpu: "3"
         nvidia.com/gpu: 1
       limits:
-        memory: "32Gi"
-        cpu: "16"
+        memory: "8Gi"
+        cpu: "3"
         nvidia.com/gpu: 1
     volumeMounts:
       - name: gcp-service-account

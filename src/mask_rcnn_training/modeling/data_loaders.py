@@ -3,9 +3,9 @@ for the model training pipeline."""
 
 from pathlib import Path
 import torch
-import train_utils as utils
-from coco_utils import get_coco
-import transforms as T
+from . import train_utils as utils
+from .coco_utils import get_coco
+from . import transforms as T
 
 
 def get_dataloader(current_working_dir, args):
@@ -24,7 +24,7 @@ def get_dataloader(current_working_dir, args):
         objects.
     """
 
-    data_path = Path(current_working_dir) / args["data"]["data_path"]
+    data_path = Path(current_working_dir) / args["train"]["data_path"]
 
     trg_dataset = get_coco(
         data_path,

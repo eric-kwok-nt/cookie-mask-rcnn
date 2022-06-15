@@ -4,7 +4,7 @@ from pathlib import Path
 import torch
 import torch.utils.data
 import torchvision
-import transforms as T
+from . import transforms as T
 from pycocotools import mask as coco_mask
 from pycocotools.coco import COCO
 
@@ -224,11 +224,11 @@ def get_coco(root, image_set, transforms, mode="instances"):
     anno_file_template = "{}_{}2017.json"
     PATHS = {
         "train": (
-            Path("train2017/data"),
+            Path("train2017"),
             Path("annotations") / anno_file_template.format(mode, "train"),
         ),
         "val": (
-            Path("val2017/data"),
+            Path("val2017"),
             Path("annotations") / anno_file_template.format(mode, "val"),
         ),
         # "train": ("val2017", os.path.join("annotations", anno_file_template.format(mode, "val")))
