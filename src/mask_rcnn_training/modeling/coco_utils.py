@@ -224,11 +224,11 @@ def get_coco(root, image_set, transforms, mode="instances"):
     anno_file_template = "{}_{}2017.json"
     PATHS = {
         "train": (
-            Path("train2017"),
+            Path("train2017") / "data",
             Path("annotations") / anno_file_template.format(mode, "train"),
         ),
         "val": (
-            Path("val2017"),
+            Path("val2017") / "data",
             Path("annotations") / anno_file_template.format(mode, "val"),
         ),
         # "train": ("val2017", os.path.join("annotations", anno_file_template.format(mode, "val")))
