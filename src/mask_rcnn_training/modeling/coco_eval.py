@@ -192,7 +192,7 @@ class COCOStats:
     def overall_results(self):
         return {**self._box_results, **self._segm_results}
 
-    def box_results(self, stats: list):
+    def bbox_results(self, stats: list):
         for i, key in enumerate(self._box_result_keys):
             self._box_results[key] = stats[i]
 
