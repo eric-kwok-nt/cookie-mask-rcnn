@@ -51,28 +51,36 @@ def main(args):
 
     params = [p for p in model.parameters() if p.requires_grad]
 
-    optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
+    optimizer = torch.optim.SGD(
+        params,
+        lr=args["train"]["initial_lr"],
+        momentum=args["train"]["momentum"],
+        weight_decay=args["train"]["weight_decay"],
+    )
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer,
+        step_size=args["train"]["lr_scheduler_step_size"],
+        gamma=args["train"]["lr_scheduler_gamma"],
+    )
     logger.info("Training the model...")
 
     for epoch in range(args["train"]["epochs"]):
-        metric_logger = train_one_epoch(
-            model, optimizer, datasets["train"], device, epoch, print_freq=10
+        _ = train_one_epoch(
+            model,
+            optimizer,
+            datasets["train"],
+            device,
+            epoch,
+            print_freq=10,
+            mlflow_init_status=mlflow_init_status,
         )
         lr_scheduler.step()
-        mrt.general_utils.mlflow_log(
-            mlflow_init_status,
-            "log_params",
-            params=dict(
-                {"epoch": epoch, "lr": optimizer.param_groups[0]["lr"]},
-                **metric_logger.metrics,
-            ),
-        )
+
         logger.info("Evaluating the model...")
         evaluate(model, datasets["val"], device)
 
         logger.info("Exporting the model...")
-        mrt.modeling.utils.export_model(model)
+        mrt.modeling.utils.export_model(args, model)
 
     if mlflow_init_status:
         artifact_uri = mlflow.get_artifact_uri()

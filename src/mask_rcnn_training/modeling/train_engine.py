@@ -8,10 +8,18 @@ from . import train_utils as utils
 
 from .coco_eval import CocoEvaluator
 from .coco_utils import get_coco_api_from_dataset
+from ..general_utils import mlflow_log
 
 
 def train_one_epoch(
-    model, optimizer, data_loader, device, epoch, print_freq, scaler=None
+    model,
+    optimizer,
+    data_loader,
+    device,
+    epoch,
+    print_freq,
+    scaler=None,
+    mlflow_init_status=None,
 ):
     model.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -59,6 +67,15 @@ def train_one_epoch(
 
         metric_logger.update(loss=losses_reduced, **loss_dict_reduced)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
+
+        mlflow_log(
+            mlflow_init_status,
+            "log_params",
+            params=dict(
+                {"epoch": epoch, "lr": optimizer.param_groups[0]["lr"]},
+                **metric_logger.metrics,
+            ),
+        )
 
     return metric_logger
 
