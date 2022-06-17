@@ -158,8 +158,9 @@ class CocoEvaluator:
 
 class COCOStats:
     def __init__(self):
-        self._results = dict()
-        self._result_keys = [
+        self._box_results = dict()
+        self._segm_results = dict()
+        self._box_result_keys = [
             "BoxAP_50-95_all_100",
             "BoxAP_50_all_100",
             "BoxAP_75_all_100",
@@ -173,15 +174,31 @@ class COCOStats:
             "BoxAR_50-95_medium_100",
             "BoxAR_50-95_large_100",
         ]
+        self._segm_result_keys = [
+            "MaskAP_50-95_all_100",
+            "MaskAP_50_all_100",
+            "MaskAP_75_all_100",
+            "MaskAP_50-95_small_100",
+            "MaskAP_50-95_medium_100",
+            "MaskAP_50-95_large_100",
+            "MaskAR_50-95_all_1",
+            "MaskAR_50-95_all_10",
+            "MaskAR_50-95_all_100",
+            "MaskAR_50-95_small_100",
+            "MaskAR_50-95_medium_100",
+            "MaskAR_50-95_large_100",
+        ]
 
-    @property
-    def results(self):
-        return self._results
+    def overall_results(self):
+        return {**self._box_results, **self._segm_results}
 
-    @results.setter
-    def results(self, stats: list):
-        for i, key in enumerate(self._result_keys):
-            self._results[key] = stats[i]
+    def box_results(self, stats: list):
+        for i, key in enumerate(self._box_result_keys):
+            self._box_results[key] = stats[i]
+
+    def segm_results(self, stats: list):
+        for i, key in enumerate(self._segm_result_keys):
+            self._segm_results[key] = stats[i]
 
 
 def convert_to_xywh(boxes):

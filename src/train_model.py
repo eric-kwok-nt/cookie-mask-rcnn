@@ -74,7 +74,8 @@ def main(args):
         logger.info("Exporting the model...")
         mrt.modeling.utils.export_model(args, model)
 
-    C_stats.results(coco_evaluator.stats)
+    C_stats.bbox_results(coco_evaluator.coco_eval["bbox"].stats)
+    C_stats.segm_results(coco_evaluator.coco_eval["segm"].stats)
     hparam_keys = [
         "epochs",
         "backbone",
@@ -91,7 +92,7 @@ def main(args):
             "epoch": epoch,
             **{key: args["train"][key] for key in hparam_keys},
         },
-        metric_dict=C_stats.results,
+        metric_dict=C_stats.overall_results,
     )
 
     writer.close()
