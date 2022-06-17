@@ -189,14 +189,15 @@ class COCOStats:
             "MaskAR_50-95_large_100",
         ]
 
+    @property
     def overall_results(self):
         return {**self._box_results, **self._segm_results}
 
-    def bbox_results(self, stats: list):
+    def update_bbox_results(self, stats: list):
         for i, key in enumerate(self._box_result_keys):
             self._box_results[key] = stats[i]
 
-    def segm_results(self, stats: list):
+    def update_segm_results(self, stats: list):
         for i, key in enumerate(self._segm_result_keys):
             self._segm_results[key] = stats[i]
 

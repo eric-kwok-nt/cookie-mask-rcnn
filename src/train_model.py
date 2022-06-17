@@ -76,8 +76,8 @@ def main(args):
         train_data["epoch"] = epoch
         mrt.modeling.utils.export_model(args, train_data)
 
-    C_stats.bbox_results(coco_evaluator.coco_eval["bbox"].stats)
-    C_stats.segm_results(coco_evaluator.coco_eval["segm"].stats)
+    C_stats.update_bbox_results(coco_evaluator.coco_eval["bbox"].stats)
+    C_stats.update_segm_results(coco_evaluator.coco_eval["segm"].stats)
     hparam_keys = [
         "epochs",
         "backbone",
