@@ -36,7 +36,8 @@ RUN wget "https://github.com/iterative/dvc/releases/download/$DVC_VERSION/$DVC_B
     apt install -y "./$DVC_BINARY_NAME" && \
     rm "./$DVC_BINARY_NAME"
 
-COPY $REPO_DIR mask-rcnn-training
+COPY ${REPO_DIR}/${CONDA_ENV_FILE} mask-rcnn-training/${CONDA_ENV_FILE}
+COPY ${REPO_DIR}/requirements.txt mask-rcnn-training/requirements.txt
 
 RUN mkdir $CONDA_HOME && chown -R 2222:2222 $CONDA_HOME
 RUN chown -R 2222:2222 $HOME_DIR && \
@@ -62,3 +63,5 @@ RUN $CONDA_BIN env create -f mask-rcnn-training/$CONDA_ENV_FILE && \
     $CONDA_BIN init bash && \
     $CONDA_BIN clean -a -y && \
     echo "source activate $CONDA_ENV_NAME" >> "$HOME_DIR/.bashrc"
+
+COPY $REPO_DIR mask-rcnn-training
