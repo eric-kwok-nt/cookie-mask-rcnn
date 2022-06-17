@@ -4,15 +4,15 @@ data_prep:
   processed_data_path: "../mask-rcnn-training-data/processed/subdir"
 
 train:
-  # setup_mlflow: false
-  # mlflow_autolog: false
-  # mlflow_tracking_uri: "mlflow-nginx-server-svc.polyaxon-v1.svc.local"
-  # mlflow_exp_name: "mask-rcnn-training"
-  # mlflow_artifact_location: "gs://mask-rcnn-training-artifacts/mlflow-tracking-server"
   data_path: "../mask-rcnn-training-data/processed/subdir"
   backbone: "resnet101"
   trainable_layers: 3
-  bs: 12
+  batch_size: 12
+  initial_lr: 0.005
+  momentum: 0.9
+  weight_decay: 0.0005
+  lr_scheduler_step_size: 3
+  lr_scheduler_gamma: 0.1
   prefetch_factor: 4
   # seed: 4002
   epochs: 10

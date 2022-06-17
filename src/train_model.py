@@ -5,6 +5,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 import mask_rcnn_training as mrt
 from mask_rcnn_training.modeling.train_engine import train_one_epoch, evaluate
+from mask_rcnn_training.modeling.coco_eval import COCOStats
 
 
 @hydra.main(config_path="../conf/base", config_name="pipelines.yml")
@@ -19,6 +20,7 @@ def main(args):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     writer = SummaryWriter("runs/maskrcnn_experiment_1")
+    C_stats = COCOStats()
 
     logger = logging.getLogger(__name__)
     logger.info("Setting up logging configuration.")
@@ -37,23 +39,61 @@ def main(args):
 
     params = [p for p in model.parameters() if p.requires_grad]
 
-    optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
+    optimizer = torch.optim.SGD(
+        params,
+        lr=args["train"]["initial_lr"],
+        momentum=args["train"]["momentum"],
+        weight_decay=args["train"]["weight_decay"],
+    )
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer,
+        step_size=args["train"]["lr_scheduler_step_size"],
+        gamma=args["train"]["lr_scheduler_gamma"],
+    )
     logger.info("Training the model...")
 
     step = [0]
     for epoch in range(args["train"]["epochs"]):
         metric_logger = train_one_epoch(
-            model, optimizer, datasets["train"], device, epoch, print_freq=10, writer=writer, step=step
+            model,
+            optimizer,
+            datasets["train"],
+            device,
+            epoch,
+            print_freq=10,
+            writer=writer,
+            step=step,
         )
         lr_scheduler.step()
         logger.info("Evaluating the model...")
-        evaluate(model, datasets["val"], device)
+        coco_evaluator = evaluate(model, datasets["val"], device)
 
         logger.info("Exporting the model...")
-        mrt.modeling.utils.export_model(model)
+        mrt.modeling.export_model(model, args, epoch)
 
-    
+        logger.info("Exporting the model...")
+        mrt.modeling.utils.export_model(args, model)
+
+    C_stats.results(coco_evaluator.stats)
+    hparam_keys = [
+        "epochs",
+        "backbone",
+        "trainable_layers",
+        "batch_size",
+        "initial_lr",
+        "momentum",
+        "weight_decay",
+        "lr_scheduler_step_size",
+        "lr_scheduler_gamma",
+    ]
+    writer.add_hparams(
+        hparam_dict={
+            "epoch": epoch,
+            **{key: args["train"][key] for key in hparam_keys},
+        },
+        metric_dict=C_stats.results,
+    )
+
     writer.close()
     logger.info("Model training has completed.")
 

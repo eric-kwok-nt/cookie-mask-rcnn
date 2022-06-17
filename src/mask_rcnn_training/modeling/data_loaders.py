@@ -34,7 +34,7 @@ def get_dataloader(current_working_dir, args):
     )
     trg_dataloader = torch.utils.data.DataLoader(
         trg_dataset,
-        batch_size=args["train"]["bs"],
+        batch_size=args["train"]["batch_size"],
         shuffle=True,
         num_workers=args["train"]["num_workers"],
         collate_fn=utils.collate_fn,
@@ -49,7 +49,7 @@ def get_dataloader(current_working_dir, args):
     )
     val_dataloader = torch.utils.data.DataLoader(
         val_dataset,
-        batch_size=args["train"]["bs"],
+        batch_size=args["train"]["batch_size"],
         shuffle=False,
         num_workers=args["train"]["num_workers"],
         collate_fn=utils.collate_fn,
