@@ -73,7 +73,7 @@ def train_one_epoch(
             "log_params",
             params=dict(
                 {"epoch": epoch, "lr": optimizer.param_groups[0]["lr"]},
-                **metric_logger.metrics,
+                **metric_logger.meters,
             ),
         )
 
