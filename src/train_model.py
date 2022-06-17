@@ -53,6 +53,7 @@ def main(args):
     logger.info("Training the model...")
 
     step = [0]
+    train_data = dict()
     for epoch in range(args["train"]["epochs"]):
         metric_logger = train_one_epoch(
             model,
@@ -69,7 +70,11 @@ def main(args):
         coco_evaluator = evaluate(model, datasets["val"], device)
 
         logger.info("Exporting the model...")
-        mrt.modeling.utils.export_model(args, model)
+        train_data["model"] = model
+        train_data["optimizer"] = optimizer
+        train_data["lr_scheduler"] = lr_scheduler
+        train_data["epoch"] = epoch
+        mrt.modeling.utils.export_model(args, train_data)
 
     C_stats.bbox_results(coco_evaluator.coco_eval["bbox"].stats)
     C_stats.segm_results(coco_evaluator.coco_eval["segm"].stats)
