@@ -11,7 +11,7 @@ from .coco_utils import get_coco_api_from_dataset
 
 
 def train_one_epoch(
-    model, optimizer, data_loader, device, epoch, print_freq, scaler=None, writer=None
+    model, optimizer, data_loader, device, epoch, print_freq, scaler=None, writer=None, step=[0]
 ):
     model.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -59,9 +59,10 @@ def train_one_epoch(
 
         if writer is not None:
             for k, v in loss_dict_reduced.items():
-                writer.add_scalars(k, v)
-            writer.add_scalars("lr", optimizer.param_groups[0]["lr"])
-
+                writer.add_scalar(k, v, step[0])
+            writer.add_scalar("lr", optimizer.param_groups[0]["lr"], step[0])
+        
+        step[0] += 1
         metric_logger.update(loss=losses_reduced, **loss_dict_reduced)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 

@@ -41,9 +41,10 @@ def main(args):
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
     logger.info("Training the model...")
 
+    step = [0]
     for epoch in range(args["train"]["epochs"]):
         metric_logger = train_one_epoch(
-            model, optimizer, datasets["train"], device, epoch, print_freq=10, writer=writer
+            model, optimizer, datasets["train"], device, epoch, print_freq=10, writer=writer, step=step
         )
         lr_scheduler.step()
         logger.info("Evaluating the model...")
