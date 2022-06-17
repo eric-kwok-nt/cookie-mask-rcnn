@@ -5,6 +5,7 @@ import mlflow
 import torch
 import mask_rcnn_training as mrt
 from mask_rcnn_training.modeling.train_engine import train_one_epoch, evaluate
+from mask_rcnn_training.modeling.coco_eval import COCOStats
 
 
 @hydra.main(config_path="../conf/base", config_name="pipelines.yml")
@@ -18,6 +19,7 @@ def main(args):
     """
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    C_stats = COCOStats()
 
     logger = logging.getLogger(__name__)
     logger.info("Setting up logging configuration.")
@@ -64,6 +66,8 @@ def main(args):
     )
     logger.info("Training the model...")
 
+    step = [0]
+    train_data = dict()
     for epoch in range(args["train"]["epochs"]):
         _ = train_one_epoch(
             model,
@@ -72,15 +76,30 @@ def main(args):
             device,
             epoch,
             print_freq=10,
+            step=step,
             mlflow_init_status=mlflow_init_status,
         )
         lr_scheduler.step()
 
         logger.info("Evaluating the model...")
-        evaluate(model, datasets["val"], device)
+        coco_evaluator = evaluate(model, datasets["val"], device)
+
+        logger.info("Logging the model performance on MLflow...")
+        C_stats.update_bbox_results(coco_evaluator.coco_eval["bbox"].stats)
+        C_stats.update_segm_results(coco_evaluator.coco_eval["segm"].stats)
+        mrt.general_utils.mlflow_log(
+            mlflow_init_status,
+            "log_metrics",
+            metrics=C_stats.overall_results,
+            step=step[0],
+        )
 
         logger.info("Exporting the model...")
-        mrt.modeling.utils.export_model(args, model)
+        train_data["model"] = model
+        train_data["optimizer"] = optimizer
+        train_data["lr_scheduler"] = lr_scheduler
+        train_data["epoch"] = epoch
+        mrt.modeling.utils.export_model(args, train_data)
 
     if mlflow_init_status:
         artifact_uri = mlflow.get_artifact_uri()

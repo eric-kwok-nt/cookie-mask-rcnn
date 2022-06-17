@@ -13,7 +13,9 @@ from pycocotools.cocoeval import COCOeval
 class CocoEvaluator:
     def __init__(self, coco_gt, iou_types):
         if not isinstance(iou_types, (list, tuple)):
-            raise TypeError(f"This constructor expects iou_types of type list or tuple, instead  got {type(iou_types)}")
+            raise TypeError(
+                f"This constructor expects iou_types of type list or tuple, instead  got {type(iou_types)}"
+            )
         coco_gt = copy.deepcopy(coco_gt)
         self.coco_gt = coco_gt
 
@@ -44,7 +46,9 @@ class CocoEvaluator:
     def synchronize_between_processes(self):
         for iou_type in self.iou_types:
             self.eval_imgs[iou_type] = np.concatenate(self.eval_imgs[iou_type], 2)
-            create_common_coco_eval(self.coco_eval[iou_type], self.img_ids, self.eval_imgs[iou_type])
+            create_common_coco_eval(
+                self.coco_eval[iou_type], self.img_ids, self.eval_imgs[iou_type]
+            )
 
     def accumulate(self):
         for coco_eval in self.coco_eval.values():
@@ -104,7 +108,10 @@ class CocoEvaluator:
             labels = prediction["labels"].tolist()
 
             rles = [
-                mask_util.encode(np.array(mask[0, :, :, np.newaxis], dtype=np.uint8, order="F"))[0] for mask in masks
+                mask_util.encode(
+                    np.array(mask[0, :, :, np.newaxis], dtype=np.uint8, order="F")
+                )[0]
+                for mask in masks
             ]
             for rle in rles:
                 rle["counts"] = rle["counts"].decode("utf-8")
@@ -149,6 +156,52 @@ class CocoEvaluator:
         return coco_results
 
 
+class COCOStats:
+    def __init__(self):
+        self._box_results = dict()
+        self._segm_results = dict()
+        self._box_result_keys = [
+            "BoxAP_50-95_all_100",
+            "BoxAP_50_all_100",
+            "BoxAP_75_all_100",
+            "BoxAP_50-95_small_100",
+            "BoxAP_50-95_medium_100",
+            "BoxAP_50-95_large_100",
+            "BoxAR_50-95_all_1",
+            "BoxAR_50-95_all_10",
+            "BoxAR_50-95_all_100",
+            "BoxAR_50-95_small_100",
+            "BoxAR_50-95_medium_100",
+            "BoxAR_50-95_large_100",
+        ]
+        self._segm_result_keys = [
+            "MaskAP_50-95_all_100",
+            "MaskAP_50_all_100",
+            "MaskAP_75_all_100",
+            "MaskAP_50-95_small_100",
+            "MaskAP_50-95_medium_100",
+            "MaskAP_50-95_large_100",
+            "MaskAR_50-95_all_1",
+            "MaskAR_50-95_all_10",
+            "MaskAR_50-95_all_100",
+            "MaskAR_50-95_small_100",
+            "MaskAR_50-95_medium_100",
+            "MaskAR_50-95_large_100",
+        ]
+
+    @property
+    def overall_results(self):
+        return {**self._box_results, **self._segm_results}
+
+    def update_bbox_results(self, stats: list):
+        for i, key in enumerate(self._box_result_keys):
+            self._box_results[key] = stats[i]
+
+    def update_segm_results(self, stats: list):
+        for i, key in enumerate(self._segm_result_keys):
+            self._segm_results[key] = stats[i]
+
+
 def convert_to_xywh(boxes):
     xmin, ymin, xmax, ymax = boxes.unbind(1)
     return torch.stack((xmin, ymin, xmax - xmin, ymax - ymin), dim=1)
@@ -189,4 +242,6 @@ def create_common_coco_eval(coco_eval, img_ids, eval_imgs):
 def evaluate(imgs):
     with redirect_stdout(io.StringIO()):
         imgs.evaluate()
-    return imgs.params.imgIds, np.asarray(imgs.evalImgs).reshape(-1, len(imgs.params.areaRng), len(imgs.params.imgIds))
+    return imgs.params.imgIds, np.asarray(imgs.evalImgs).reshape(
+        -1, len(imgs.params.areaRng), len(imgs.params.imgIds)
+    )

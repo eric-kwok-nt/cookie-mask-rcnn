@@ -19,6 +19,7 @@ def train_one_epoch(
     epoch,
     print_freq,
     scaler=None,
+    step=[0],
     mlflow_init_status=None,
 ):
     model.train()
@@ -70,13 +71,18 @@ def train_one_epoch(
 
         mlflow_log(
             mlflow_init_status,
-            "log_params",
-            params=dict(
-                {"epoch": epoch, "lr": optimizer.param_groups[0]["lr"]},
-                **metric_logger.meters,
+            "log_metrics",
+            metrics=dict(
+                {
+                    "epoch": epoch,
+                    "lr": float(optimizer.param_groups[0]["lr"]),
+                    "loss": losses_reduced,
+                },
+                **loss_dict_reduced,
             ),
+            step=step[0],
         )
-
+        step[0] += 1
     return metric_logger
 
 
