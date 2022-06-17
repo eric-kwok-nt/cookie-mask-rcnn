@@ -69,9 +69,6 @@ def main(args):
         coco_evaluator = evaluate(model, datasets["val"], device)
 
         logger.info("Exporting the model...")
-        mrt.modeling.export_model(model, args, epoch)
-
-        logger.info("Exporting the model...")
         mrt.modeling.utils.export_model(args, model)
 
     C_stats.bbox_results(coco_evaluator.coco_eval["bbox"].stats)
