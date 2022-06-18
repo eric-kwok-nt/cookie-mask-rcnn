@@ -72,6 +72,8 @@ def main(args):
             train_data = mrt.modeling.utils.load_model(
                 args["train"]["saved_model_path"], model, optimizer
             )
+        last_epoch = train_data["epoch"]
+        logger.info(f"Starting from epoch {last_epoch}")
     logger.info("Training the model...")
 
     step = [0]

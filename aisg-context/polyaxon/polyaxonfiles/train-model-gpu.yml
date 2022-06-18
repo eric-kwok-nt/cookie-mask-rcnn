@@ -82,6 +82,7 @@ run:
         train.mlflow_autolog={{ MLFLOW_AUTOLOG }}
         train.mlflow_tracking_uri={{ MLFLOW_TRACKING_URI }}
         train.mlflow_exp_name={{ MLFLOW_EXP_NAME }}
+        train.epochs=10
         train.data_path={{ INPUT_DATA_DIR }}
         train.batch_size=2
         train.initial_lr=0.005
@@ -92,11 +93,11 @@ run:
       ]
     resources:
       requests:
-        memory: "8Gi"
+        memory: "20Gi"
         cpu: "3"
         nvidia.com/gpu: 1
       limits:
-        memory: "8Gi"
+        memory: "20Gi"
         cpu: "3"
         nvidia.com/gpu: 1
     volumeMounts:
