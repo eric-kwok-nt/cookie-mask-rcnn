@@ -10,7 +10,7 @@ import torch
 def export_model(args, train_data):
     """Serialises and exports the trained weights with it training parameters.
 
-    Parameters
+    Arguments
     ----------
     args : dict
         Dictionary containing the pipeline's configuration passed from
@@ -35,13 +35,13 @@ def export_model(args, train_data):
     )
 
 
-def load_model(path, model, optimizer=None):
+def load_model(path, model, optimizer=None, lr_scheduler=None):
     """Function to load the predictive model.
 
     A utility function to be used for loading a PyTorch model / checkpoint
     saved in '.pth' format.
 
-    Parameters
+    Arguments
     ----------
     path : str
         Path to a directory containing a Keras model in
@@ -49,17 +49,34 @@ def load_model(path, model, optimizer=None):
     model : torch.nn.Module
         MaskRCNN model to be loaded
     optimizer : (Optional) torch.optim.Optimizer
+        Optimizer to be loaded
+    lr_scheduler : (Optional) torch.optim.lr_scheduler.LrScheduler
+        Learning rate scheduler to be loaded
 
     Returns
     -------
-    model : torch.nn.Module
-        Loaded model.
-    optimizer : (Optional) torch.optim.Optimizer
-        Loaded optimizer. Loaded if the input optimizer is not None.
+    dict : A dictionary containing the loaded model, optimizer, lr_scheduler,
+        and epoch. If the optimizer or lr_scheduler are not provided, they are
+        not loaded. The keys in the dictionary are 'model', 'optimizer',
+        'lr_scheduler', and 'epoch'.
     """
+    output_dict = dict()
+
     checkpoint = torch.load(path)
     model.load_state_dict(checkpoint["model_state_dict"])
+    last_epoch = checkpoint["epoch"]
+
+    output_dict["epoch"] = last_epoch
+    output_dict["model"] = model
     if optimizer is not None:
         optimizer.load_state_dict(checkpoint["optimizer"])
-        return model, optimizer
-    return model
+        output_dict["optimizer"] = optimizer
+        if lr_scheduler is not None:
+            try:
+                lr_scheduler.load_state_dict(checkpoint["lr_scheduler"])
+                output_dict["lr_scheduler"] = lr_scheduler
+                return output_dict
+            except KeyError:
+                pass
+
+    return output_dict

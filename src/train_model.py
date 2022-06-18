@@ -39,22 +39,43 @@ def main(args):
 
     params = [p for p in model.parameters() if p.requires_grad]
 
+    train_data = dict()
+    last_epoch = -1
+
     optimizer = torch.optim.SGD(
         params,
         lr=args["train"]["initial_lr"],
         momentum=args["train"]["momentum"],
         weight_decay=args["train"]["weight_decay"],
     )
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer,
-        step_size=args["train"]["lr_scheduler_step_size"],
-        gamma=args["train"]["lr_scheduler_gamma"],
-    )
+    if args["train"]["lr_scheduler"] == "step":
+        lr_scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=args["train"]["lr_scheduler_step_size"],
+            gamma=args["train"]["lr_scheduler_gamma"],
+        )
+    elif args["train"]["lr_scheduler"] == "reduceonplateau":
+        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            mode="min",
+            factor=args["train"]["lr_scheduler_gamma"],
+            patience=args["train"]["lr_scheduler_patience"],
+        )
+
+    if args["train"]["saved_model_path"] is not None:
+        logger.info(f"Loading model from {args['train']['saved_model_path']}")
+        if not args["train"]["new_lr_scheduler"]:
+            train_data = mrt.modeling.utils.load_model(
+                args["train"]["saved_model_path"], model, optimizer, lr_scheduler
+            )
+        else:
+            train_data = mrt.modeling.utils.load_model(
+                args["train"]["saved_model_path"], model, optimizer
+            )
     logger.info("Training the model...")
 
     step = [0]
-    train_data = dict()
-    for epoch in range(args["train"]["epochs"]):
+    for epoch in range(last_epoch + 1, args["train"]["epochs"]):
         metric_logger = train_one_epoch(
             model,
             optimizer,
