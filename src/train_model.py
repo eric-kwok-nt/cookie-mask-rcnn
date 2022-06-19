@@ -24,7 +24,7 @@ def load_optimizer_scheduler(args, params):
     elif args["train"]["lr_scheduler"] == "reduceonplateau":
         lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer,
-            mode="min",
+            mode="max",
             factor=args["train"]["lr_scheduler_gamma"],
             patience=args["train"]["lr_scheduler_patience"],
         )
