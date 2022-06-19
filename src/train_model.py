@@ -64,13 +64,18 @@ def main(args):
 
     if args["train"]["saved_model_path"] is not None:
         logger.info(f"Loading model from {args['train']['saved_model_path']}")
-        if not args["train"]["new_lr_scheduler"]:
-            train_data = mrt.modeling.utils.load_model(
-                args["train"]["saved_model_path"], model, optimizer, lr_scheduler
-            )
+        if not args["train"]["new_optimizer"]:
+            if not args["train"]["new_lr_scheduler"]:
+                train_data = mrt.modeling.utils.load_model(
+                    args["train"]["saved_model_path"], model, optimizer, lr_scheduler
+                )
+            else:
+                train_data = mrt.modeling.utils.load_model(
+                    args["train"]["saved_model_path"], model, optimizer
+                )
         else:
             train_data = mrt.modeling.utils.load_model(
-                args["train"]["saved_model_path"], model, optimizer
+                args["train"]["saved_model_path"], model
             )
         last_epoch = train_data["epoch"]
         logger.info(f"Starting from epoch {last_epoch}")

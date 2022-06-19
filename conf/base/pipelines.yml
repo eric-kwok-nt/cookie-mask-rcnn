@@ -19,6 +19,7 @@ train:
   epochs: 10
   num_workers: 12
   saved_model_path: null
+  new_optimizer: false
   new_lr_scheduler: false
   # seed: 4002
 
