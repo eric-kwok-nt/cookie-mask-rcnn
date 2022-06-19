@@ -8,6 +8,29 @@ from mask_rcnn_training.modeling.train_engine import train_one_epoch, evaluate
 from mask_rcnn_training.modeling.coco_eval import COCOStats
 
 
+def load_optimizer_scheduler(args, params):
+    optimizer = torch.optim.SGD(
+        params,
+        lr=args["train"]["initial_lr"],
+        momentum=args["train"]["momentum"],
+        weight_decay=args["train"]["weight_decay"],
+    )
+    if args["train"]["lr_scheduler"] == "step":
+        lr_scheduler = torch.optim.lr_scheduler.StepLR(
+            optimizer,
+            step_size=args["train"]["lr_scheduler_step_size"],
+            gamma=args["train"]["lr_scheduler_gamma"],
+        )
+    elif args["train"]["lr_scheduler"] == "reduceonplateau":
+        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            mode="min",
+            factor=args["train"]["lr_scheduler_gamma"],
+            patience=args["train"]["lr_scheduler_patience"],
+        )
+    return optimizer, lr_scheduler
+
+
 @hydra.main(config_path="../conf/base", config_name="pipelines.yml")
 def main(args):
     """This main function does the following:
@@ -42,25 +65,7 @@ def main(args):
     train_data = dict()
     last_epoch = -1
 
-    optimizer = torch.optim.SGD(
-        params,
-        lr=args["train"]["initial_lr"],
-        momentum=args["train"]["momentum"],
-        weight_decay=args["train"]["weight_decay"],
-    )
-    if args["train"]["lr_scheduler"] == "step":
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer,
-            step_size=args["train"]["lr_scheduler_step_size"],
-            gamma=args["train"]["lr_scheduler_gamma"],
-        )
-    elif args["train"]["lr_scheduler"] == "reduceonplateau":
-        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer,
-            mode="min",
-            factor=args["train"]["lr_scheduler_gamma"],
-            patience=args["train"]["lr_scheduler_patience"],
-        )
+    optimizer, lr_scheduler = load_optimizer_scheduler(args, params)
 
     if args["train"]["saved_model_path"] is not None:
         logger.info(f"Loading model from {args['train']['saved_model_path']}")
@@ -93,9 +98,14 @@ def main(args):
             writer=writer,
             step=step,
         )
-        lr_scheduler.step()
         logger.info("Evaluating the model...")
         coco_evaluator = evaluate(model, datasets["val"], device)
+
+        segm_ap = coco_evaluator.coco_eval["segm"].stats[0]
+        if args["train"]["lr_scheduler"] == "step":
+            lr_scheduler.step()
+        elif args["train"]["lr_scheduler"] == "reduceonplateau":
+            lr_scheduler.step(metrics=segm_ap)
 
         logger.info("Exporting the model...")
         train_data["model"] = model
@@ -104,8 +114,12 @@ def main(args):
         train_data["epoch"] = epoch
         mrt.modeling.utils.export_model(args, train_data)
 
-    C_stats.update_bbox_results(coco_evaluator.coco_eval["bbox"].stats)
-    C_stats.update_segm_results(coco_evaluator.coco_eval["segm"].stats)
+        C_stats.update_bbox_results(coco_evaluator.coco_eval["bbox"].stats)
+        C_stats.update_segm_results(coco_evaluator.coco_eval["segm"].stats)
+
+        for k, v in C_stats.overall_results.items():
+            writer.add_scalar(k, v, step[0])
+
     hparam_keys = [
         "epochs",
         "backbone",
@@ -117,11 +131,9 @@ def main(args):
         "lr_scheduler_step_size",
         "lr_scheduler_gamma",
     ]
+
     writer.add_hparams(
-        hparam_dict={
-            "epoch": epoch,
-            **{key: args["train"][key] for key in hparam_keys},
-        },
+        hparam_dict={key: args["train"][key] for key in hparam_keys},
         metric_dict=C_stats.overall_results,
     )
 
