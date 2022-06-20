@@ -3,9 +3,11 @@ for the model training pipeline."""
 
 from pathlib import Path
 import torch
+from torchvision.transforms import InterpolationMode
 from . import train_utils as utils
 from .coco_utils import get_coco
 from . import transforms as T
+from .group_by_aspect_ratio import GroupedBatchSampler, create_aspect_ratio_groups
 
 
 def get_dataloader(current_working_dir, args):
@@ -26,29 +28,59 @@ def get_dataloader(current_working_dir, args):
 
     data_path = Path(current_working_dir) / args["train"]["data_path"]
 
+    train_collate_fn = utils.collate_fn
+    if args["train"]["copy_paste"]:
+        copypaste = T.SimpleCopyPaste(
+            resize_interpolation=InterpolationMode.BILINEAR, blending=True
+        )
+
+        def copypaste_collate_fn(batch):
+            return copypaste(*utils.collate_fn(batch))
+
+        train_collate_fn = copypaste_collate_fn
+
     trg_dataset = get_coco(
         data_path,
         "train",
-        transforms=_get_transform(train=True),
+        transforms=_get_transform(
+            train=True, scale_jitter=args["train"]["scale_jitter"]
+        ),
         mode="instances",
     )
+
+    train_sampler = torch.utils.data.RandomSampler(trg_dataset)
+    if args["train"]["aspect_ratio_group_factor"] >= 0:
+        group_ids = create_aspect_ratio_groups(
+            trg_dataset, k=args["train"]["aspect_ratio_group_factor"]
+        )
+        train_batch_sampler = GroupedBatchSampler(
+            train_sampler, group_ids, args.batch_size
+        )
+    else:
+        train_batch_sampler = torch.utils.data.BatchSampler(
+            train_sampler, args.batch_size, drop_last=True
+        )
+
     trg_dataloader = torch.utils.data.DataLoader(
         trg_dataset,
+        batch_sampler=train_batch_sampler,
         batch_size=args["train"]["batch_size"],
         shuffle=True,
         num_workers=args["train"]["num_workers"],
-        collate_fn=utils.collate_fn,
+        collate_fn=train_collate_fn,
         prefetch_factor=args["train"]["prefetch_factor"],
     )
 
     val_dataset = get_coco(
         data_path,
         "val",
-        transforms=_get_transform(train=False),
+        transforms=_get_transform(train=False, scale_jitter=False),
         mode="instances",
     )
+    val_sampler = torch.utils.data.SequentialSampler(val_dataset)
     val_dataloader = torch.utils.data.DataLoader(
         val_dataset,
+        sampler=val_sampler,
         batch_size=args["train"]["batch_size"],
         shuffle=False,
         num_workers=args["train"]["num_workers"],
@@ -64,9 +96,11 @@ def get_dataloader(current_working_dir, args):
     return dataloaders
 
 
-def _get_transform(train: bool):
+def _get_transform(train: bool, scale_jitter: bool = False):
     transforms = []
     transforms.append(T.ToTensor())
     if train:
         transforms.append(T.RandomHorizontalFlip(0.5))
+        if scale_jitter:
+            transforms.append(T.ScaleJitter((800, 1333)))
     return T.Compose(transforms)
