@@ -93,6 +93,7 @@ def main(args):
     logger.info("Training the model...")
 
     step = [0]
+    scaler = torch.cuda.amp.GradScaler() if args["train"]["amp"] else None
     for epoch in range(last_epoch + 1, args["train"]["epochs"]):
         metric_logger = train_one_epoch(
             model,
@@ -101,6 +102,7 @@ def main(args):
             device,
             epoch,
             print_freq=10,
+            scaler=scaler,
             writer=writer,
             step=step,
         )
@@ -113,7 +115,7 @@ def main(args):
         elif args["train"]["lr_scheduler"] == "reduceonplateau":
             lr_scheduler.step(metrics=segm_ap)
         elif args["train"]["lr_scheduler"] == "multistep":
-            pass
+            lr_scheduler.step()
 
         logger.info("Exporting the model...")
         train_data["model"] = model
