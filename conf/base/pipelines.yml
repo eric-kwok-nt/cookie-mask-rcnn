@@ -21,8 +21,9 @@ train:
   saved_model_path: null
   new_optimizer: false
   new_lr_scheduler: false
-  scale_jitter: false
+  scale_jitter: true
   copy_paste: true
+  aspect_ratio_group_factor: 3
   # seed: 4002
 
 inference:
