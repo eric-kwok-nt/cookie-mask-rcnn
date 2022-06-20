@@ -54,17 +54,16 @@ def get_dataloader(current_working_dir, args):
             trg_dataset, k=args["train"]["aspect_ratio_group_factor"]
         )
         train_batch_sampler = GroupedBatchSampler(
-            train_sampler, group_ids, args.batch_size
+            train_sampler, group_ids, args["train"]["batch_size"]
         )
     else:
         train_batch_sampler = torch.utils.data.BatchSampler(
-            train_sampler, args.batch_size, drop_last=True
+            train_sampler, args["train"]["batch_size"], drop_last=True
         )
 
     trg_dataloader = torch.utils.data.DataLoader(
         trg_dataset,
         batch_sampler=train_batch_sampler,
-        batch_size=args["train"]["batch_size"],
         shuffle=True,
         num_workers=args["train"]["num_workers"],
         collate_fn=train_collate_fn,
