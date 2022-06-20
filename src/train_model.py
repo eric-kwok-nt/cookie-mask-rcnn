@@ -28,6 +28,12 @@ def load_optimizer_scheduler(args, params):
             factor=args["train"]["lr_scheduler_gamma"],
             patience=args["train"]["lr_scheduler_patience"],
         )
+    elif args["train"]["lr_scheduler"] == "multistep":
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+            optimizer,
+            milestones=args["train"]["lr_scheduler_milestones"],
+            gamma=args["train"]["lr_scheduler_gamma"],
+        )
     return optimizer, lr_scheduler
 
 
@@ -106,6 +112,8 @@ def main(args):
             lr_scheduler.step()
         elif args["train"]["lr_scheduler"] == "reduceonplateau":
             lr_scheduler.step(metrics=segm_ap)
+        elif args["train"]["lr_scheduler"] == "multistep":
+            pass
 
         logger.info("Exporting the model...")
         train_data["model"] = model
