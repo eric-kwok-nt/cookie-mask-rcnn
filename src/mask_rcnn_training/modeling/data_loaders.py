@@ -28,6 +28,7 @@ def get_dataloader(current_working_dir, args):
 
     data_path = Path(current_working_dir) / args["train"]["data_path"]
 
+    # Get the dataloader for the training dataset
     train_collate_fn = utils.collate_fn
     if args["train"]["copy_paste"]:
         copypaste = T.SimpleCopyPaste(
@@ -64,12 +65,12 @@ def get_dataloader(current_working_dir, args):
     trg_dataloader = torch.utils.data.DataLoader(
         trg_dataset,
         batch_sampler=train_batch_sampler,
-        shuffle=True,
         num_workers=args["train"]["num_workers"],
         collate_fn=train_collate_fn,
         prefetch_factor=args["train"]["prefetch_factor"],
     )
 
+    # Get the loader for the validation dataset
     val_dataset = get_coco(
         data_path,
         "val",
