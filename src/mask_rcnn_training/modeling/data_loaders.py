@@ -36,9 +36,17 @@ def get_dataloader(current_working_dir, args):
         )
 
         def copypaste_collate_fn(batch):
-            return copypaste(*utils.collate_fn(batch))
+            return copypaste(*train_collate_fn(batch))
 
         train_collate_fn = copypaste_collate_fn
+
+    if args["train"]["rnd_iou_crop"]:
+        rnd_iou_crop = T.RandomIoUCrop()
+
+        def rnd_iou_crop_fn(batch):
+            return rnd_iou_crop(*train_collate_fn(batch))
+
+        train_collate_fn = rnd_iou_crop_fn
 
     trg_dataset = get_coco(
         data_path,
@@ -46,7 +54,6 @@ def get_dataloader(current_working_dir, args):
         transforms=_get_transform(
             train=True,
             scale_jitter=args["train"]["scale_jitter"],
-            rnd_iou_crop=args["train"]["rnd_iou_crop"],
             rnd_photometric_distort=args["train"]["rnd_photometric_distort"],
         ),
         mode="instances",
@@ -80,7 +87,6 @@ def get_dataloader(current_working_dir, args):
         transforms=_get_transform(
             train=False,
             scale_jitter=False,
-            rnd_iou_crop=False,
             rnd_photometric_distort=False,
         ),
         mode="instances",
@@ -108,7 +114,6 @@ def _get_transform(
     train: bool,
     scale_jitter: bool = False,
     rnd_photometric_distort: bool = False,
-    rnd_iou_crop: bool = False,
 ):
     transforms = []
     transforms.append(T.ToTensor())
@@ -124,8 +129,6 @@ def _get_transform(
                     p=0.5,
                 )
             )
-        if rnd_iou_crop:
-            transforms.append(T.RandomIoUCrop())
         if scale_jitter:
             transforms.append(T.ScaleJitter((800, 1333)))
     return T.Compose(transforms)
