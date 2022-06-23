@@ -44,7 +44,10 @@ def get_dataloader(current_working_dir, args):
         data_path,
         "train",
         transforms=_get_transform(
-            train=True, scale_jitter=args["train"]["scale_jitter"]
+            train=True,
+            scale_jitter=args["train"]["scale_jitter"],
+            rnd_iou_crop=args["train"]["rnd_iou_crop"],
+            rnd_photometric_distort=args["train"]["rnd_photometric_distort"],
         ),
         mode="instances",
     )
@@ -74,7 +77,12 @@ def get_dataloader(current_working_dir, args):
     val_dataset = get_coco(
         data_path,
         "val",
-        transforms=_get_transform(train=False, scale_jitter=False),
+        transforms=_get_transform(
+            train=False,
+            scale_jitter=False,
+            rnd_iou_crop=False,
+            rnd_photometric_distort=False,
+        ),
         mode="instances",
     )
     val_sampler = torch.utils.data.SequentialSampler(val_dataset)
@@ -96,11 +104,28 @@ def get_dataloader(current_working_dir, args):
     return dataloaders
 
 
-def _get_transform(train: bool, scale_jitter: bool = False):
+def _get_transform(
+    train: bool,
+    scale_jitter: bool = False,
+    rnd_photometric_distort: bool = False,
+    rnd_iou_crop: bool = False,
+):
     transforms = []
     transforms.append(T.ToTensor())
     if train:
         transforms.append(T.RandomHorizontalFlip(0.5))
+        if rnd_photometric_distort:
+            transforms.append(
+                T.RandomPhotometricDistort(
+                    contrast=(0.5, 1.5),
+                    saturation=(0.5, 1.5),
+                    hue=(-0.05, 0.05),
+                    brightness=(0.875, 1.125),
+                    p=0.5,
+                )
+            )
+        if rnd_iou_crop:
+            transforms.append(T.RandomIoUCrop())
         if scale_jitter:
             transforms.append(T.ScaleJitter((800, 1333)))
     return T.Compose(transforms)

@@ -16,14 +16,16 @@ train:
   lr_scheduler_step_size: 3 # For StepLR lr scheduler
   lr_scheduler_gamma: 0.1
   lr_scheduler_patience: 2 # For ReduceLROnPlateau lr scheduler
-  prefetch_factor: 4
+  prefetch_factor: 2
   epochs: 37
-  num_workers: 12
+  num_workers: 6
   saved_model_path: null
   new_optimizer: false
   new_lr_scheduler: false
   scale_jitter: true
   copy_paste: true
+  rnd_iou_crop: true
+  rnd_photometric_distort: true
   aspect_ratio_group_factor: 3
   amp: true # Use mixed precision training
   # seed: 4002
