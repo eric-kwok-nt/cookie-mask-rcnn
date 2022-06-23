@@ -24,7 +24,6 @@ train:
   new_lr_scheduler: false
   scale_jitter: true
   copy_paste: true
-  rnd_iou_crop: true
   rnd_photometric_distort: true
   aspect_ratio_group_factor: 3
   amp: true # Use mixed precision training

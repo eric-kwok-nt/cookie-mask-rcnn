@@ -36,17 +36,9 @@ def get_dataloader(current_working_dir, args):
         )
 
         def copypaste_collate_fn(batch):
-            return copypaste(*train_collate_fn(batch))
+            return copypaste(*utils.collate_fn(batch))
 
         train_collate_fn = copypaste_collate_fn
-
-    if args["train"]["rnd_iou_crop"]:
-        rnd_iou_crop = T.RandomIoUCrop()
-
-        def rnd_iou_crop_fn(batch):
-            return rnd_iou_crop(*train_collate_fn(batch))
-
-        train_collate_fn = rnd_iou_crop_fn
 
     trg_dataset = get_coco(
         data_path,
