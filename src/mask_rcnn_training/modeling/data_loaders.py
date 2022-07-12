@@ -45,8 +45,8 @@ def get_dataloader(current_working_dir, args):
         "train",
         transforms=_get_transform(
             train=True,
-            scale_jitter=args["train"]["scale_jitter"],
-            rnd_photometric_distort=args["train"]["rnd_photometric_distort"],
+            #     scale_jitter=args["train"]["scale_jitter"],
+            #     rnd_photometric_distort=args["train"]["rnd_photometric_distort"],
         ),
         mode="instances",
     )
@@ -78,8 +78,8 @@ def get_dataloader(current_working_dir, args):
         "val",
         transforms=_get_transform(
             train=False,
-            scale_jitter=False,
-            rnd_photometric_distort=False,
+            # scale_jitter=False,
+            # rnd_photometric_distort=False,
         ),
         mode="instances",
     )
@@ -102,25 +102,37 @@ def get_dataloader(current_working_dir, args):
     return dataloaders
 
 
-def _get_transform(
-    train: bool,
-    scale_jitter: bool = False,
-    rnd_photometric_distort: bool = False,
-):
+# def _get_transform(
+#     train: bool,
+#     scale_jitter: bool = False,
+#     rnd_photometric_distort: bool = False,
+# ):
+#     transforms = []
+#     transforms.append(T.ToTensor())
+#     if train:
+#         transforms.append(T.RandomHorizontalFlip(0.5))
+#         if rnd_photometric_distort:
+#             transforms.append(
+#                 T.RandomPhotometricDistort(
+#                     contrast=(0.5, 1.5),
+#                     saturation=(0.5, 1.5),
+#                     hue=(-0.05, 0.05),
+#                     brightness=(0.875, 1.125),
+#                     p=0.5,
+#                 )
+#             )
+#         if scale_jitter:
+#             transforms.append(T.ScaleJitter((800, 1333)))
+#     return T.Compose(transforms)
+
+
+def _get_transform(train: bool):
     transforms = []
     transforms.append(T.ToTensor())
     if train:
-        transforms.append(T.RandomHorizontalFlip(0.5))
-        if rnd_photometric_distort:
-            transforms.append(
-                T.RandomPhotometricDistort(
-                    contrast=(0.5, 1.5),
-                    saturation=(0.5, 1.5),
-                    hue=(-0.05, 0.05),
-                    brightness=(0.875, 1.125),
-                    p=0.5,
-                )
-            )
-        if scale_jitter:
-            transforms.append(T.ScaleJitter((800, 1333)))
+        transforms.append(T.ScaleJitter(target_size=(1024, 1024)))
+        transforms.append(
+            T.FixedSizeCrop(size=(1024, 1024), fill=(123.0, 117.0, 104.0))
+        )
+        transforms.append(T.RandomHorizontalFlip(p=0.5))
     return T.Compose(transforms)

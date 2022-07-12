@@ -26,6 +26,7 @@ def maskrcnn_model(args):
         pretrained=True,
         norm_layer=misc_nn_ops.FrozenBatchNorm2d,
         trainable_layers=args["train"]["trainable_layers"],
+        _skip_resize=True,
     )
     model = MaskRCNN(backbone, num_classes=91)
 
