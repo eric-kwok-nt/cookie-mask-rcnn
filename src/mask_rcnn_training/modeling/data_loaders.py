@@ -123,7 +123,6 @@ def _get_transform(
             )
         if scale_jitter:
             transforms.append(T.ScaleJitter((800, 1333)))
-        transforms.append(T.FixedSizeCrop((800, 1333), fill=115))
     return T.Compose(transforms)
 
 
