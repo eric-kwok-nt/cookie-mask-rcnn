@@ -24,8 +24,7 @@ def maskrcnn_model(args):
 
     backbone = resnet_fpn_backbone(
         backbone_name=args["train"]["backbone"],
-        pretrained=True,
-        norm_layer=misc_nn_ops.FrozenBatchNorm2d,
+        # pretrained=True,
         trainable_layers=args["train"]["trainable_layers"],
         weights=ResNet101_Weights.DEFAULT,
     )
