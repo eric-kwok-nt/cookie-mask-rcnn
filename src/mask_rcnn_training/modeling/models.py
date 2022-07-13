@@ -28,6 +28,6 @@ def maskrcnn_model(args):
         trainable_layers=args["train"]["trainable_layers"],
     )
     # model = MaskRCNN(backbone, num_classes=91, _skip_resize=True)
-    model = MaskRCNN(backbone, num_classes=91)
+    model = MaskRCNN(backbone, num_classes=91, _skip_resize=True)
 
     return model

@@ -106,6 +106,12 @@ def main(args):
 
     step = [0]
     for epoch in range(last_epoch + 1, args["train"]["epochs"]):
+        if args["train"]["lr_scheduler"] == "step":
+            lr_scheduler.step()
+        elif args["train"]["lr_scheduler"] == "reduceonplateau":
+            lr_scheduler.step(metrics=segm_ap)
+        elif args["train"]["lr_scheduler"] == "multistep":
+            lr_scheduler.step()
         metric_logger = train_one_epoch(
             model,
             optimizer,
@@ -121,12 +127,6 @@ def main(args):
         coco_evaluator = evaluate(model, datasets["val"], device)
 
         segm_ap = coco_evaluator.coco_eval["segm"].stats[0]
-        if args["train"]["lr_scheduler"] == "step":
-            lr_scheduler.step()
-        elif args["train"]["lr_scheduler"] == "reduceonplateau":
-            lr_scheduler.step(metrics=segm_ap)
-        elif args["train"]["lr_scheduler"] == "multistep":
-            lr_scheduler.step()
 
         logger.info("Exporting the model...")
         train_data["model"] = model
