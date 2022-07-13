@@ -133,4 +133,5 @@ def _get_transform(train: bool):
         transforms.append(T.FixedSizeCrop(size=(800, 1333), fill=(123.0, 117.0, 104.0)))
         transforms.append(T.RandomHorizontalFlip(p=0.5))
     transforms.append(T.ToTensor())
+    transforms.append(T.ConvertImageDtype(torch.float))
     return T.Compose(transforms)
