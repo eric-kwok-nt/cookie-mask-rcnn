@@ -45,8 +45,8 @@ def get_dataloader(current_working_dir, args):
         "train",
         transforms=_get_transform(
             train=True,
-            scale_jitter=args["train"]["scale_jitter"],
-            rnd_photometric_distort=args["train"]["rnd_photometric_distort"],
+            # scale_jitter=args["train"]["scale_jitter"],
+            # rnd_photometric_distort=args["train"]["rnd_photometric_distort"],
         ),
         mode="instances",
     )
@@ -78,8 +78,8 @@ def get_dataloader(current_working_dir, args):
         "val",
         transforms=_get_transform(
             train=False,
-            scale_jitter=False,
-            rnd_photometric_distort=False,
+            # scale_jitter=False,
+            # rnd_photometric_distort=False,
         ),
         mode="instances",
     )
