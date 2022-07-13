@@ -129,8 +129,8 @@ def get_dataloader(current_working_dir, args):
 def _get_transform(train: bool):
     transforms = []
     if train:
-        transforms.append(T.ScaleJitter(target_size=(800, 1333)))
-        transforms.append(T.FixedSizeCrop(size=(800, 1333), fill=(123, 117, 104)))
+        transforms.append(T.ScaleJitter(target_size=(1024, 1024)))
+        transforms.append(T.FixedSizeCrop(size=(1024, 1024), fill=(123, 117, 104)))
         transforms.append(T.RandomHorizontalFlip(p=0.5))
     transforms.append(T.ToTensor())
     transforms.append(T.ConvertImageDtype(torch.float))
