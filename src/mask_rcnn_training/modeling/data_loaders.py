@@ -130,7 +130,7 @@ def _get_transform(train: bool):
     transforms = []
     if train:
         transforms.append(T.ScaleJitter(target_size=(800, 1333)))
-        transforms.append(T.FixedSizeCrop(size=(800, 1333), fill=(123.0, 117.0, 104.0)))
+        transforms.append(T.FixedSizeCrop(size=(800, 1333), fill=(123, 117, 104)))
         transforms.append(T.RandomHorizontalFlip(p=0.5))
     transforms.append(T.ToTensor())
     transforms.append(T.ConvertImageDtype(torch.float))
