@@ -43,7 +43,7 @@ class RandomHorizontalFlip(T.RandomHorizontalFlip):
                     keypoints = target["keypoints"]
                     keypoints = _flip_coco_person_keypoints(keypoints, width)
                     target["keypoints"] = keypoints
-        return (image,)
+        return image, target
 
 
 class PILToTensor(nn.Module):
@@ -484,7 +484,7 @@ class RandomShortestSize(nn.Module):
                     interpolation=InterpolationMode.NEAREST,
                 )
 
-        return (image,)
+        return image, target
 
 
 class SimpleCopyPaste(torch.nn.Module):
