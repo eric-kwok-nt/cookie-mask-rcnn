@@ -21,12 +21,16 @@ def export_model(args, train_data):
         lr_scheduler: Trained learning rate scheduler,
         epoch: Current epoch,
     """
+    scaler_state_dict = None
+    if train_data["scaler"] is not None:
+        scaler_state_dict = train_data["scaler"].state_dict()
     train_utils.save_on_master(
         {
             "model_state_dict": train_data["model"].state_dict(),
             "optimizer": train_data["optimizer"].state_dict(),
             "lr_scheduler": train_data["lr_scheduler"].state_dict(),
             "epoch": train_data["epoch"],
+            "scaler": scaler_state_dict,
         },
         Path(hydra.utils.get_original_cwd())
         / "models/maskrcnn_{}_{}.pth".format(
@@ -35,7 +39,7 @@ def export_model(args, train_data):
     )
 
 
-def load_model(path, model, optimizer=None, lr_scheduler=None):
+def load_model(path, model, optimizer=None, lr_scheduler=None, scaler=None):
     """Function to load the predictive model.
 
     A utility function to be used for loading a PyTorch model / checkpoint
@@ -52,6 +56,7 @@ def load_model(path, model, optimizer=None, lr_scheduler=None):
         Optimizer to be loaded
     lr_scheduler : (Optional) torch.optim.lr_scheduler.LrScheduler
         Learning rate scheduler to be loaded
+    scaler : (Optional) scaler to be loaded
 
     Returns
     -------
@@ -68,6 +73,9 @@ def load_model(path, model, optimizer=None, lr_scheduler=None):
 
     output_dict["epoch"] = last_epoch
     output_dict["model"] = model
+    if scaler is not None:
+        scaler.load_state_dict(checkpoint["scaler"])
+        output_dict["scaler"] = scaler
     if optimizer is not None:
         optimizer.load_state_dict(checkpoint["optimizer"])
         output_dict["optimizer"] = optimizer

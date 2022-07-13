@@ -102,37 +102,35 @@ def get_dataloader(current_working_dir, args):
     return dataloaders
 
 
-def _get_transform(
-    train: bool,
-    scale_jitter: bool = False,
-    rnd_photometric_distort: bool = False,
-):
-    transforms = []
-    transforms.append(T.ToTensor())
-    if train:
-        transforms.append(T.RandomHorizontalFlip(0.5))
-        if rnd_photometric_distort:
-            transforms.append(
-                T.RandomPhotometricDistort(
-                    contrast=(0.5, 1.5),
-                    saturation=(0.5, 1.5),
-                    hue=(-0.05, 0.05),
-                    brightness=(0.875, 1.125),
-                    p=0.5,
-                )
-            )
-        if scale_jitter:
-            transforms.append(T.ScaleJitter((800, 1333)))
-    return T.Compose(transforms)
-
-
-# def _get_transform(train: bool):
+# def _get_transform(
+#     train: bool,
+#     scale_jitter: bool = False,
+#     rnd_photometric_distort: bool = False,
+# ):
 #     transforms = []
 #     transforms.append(T.ToTensor())
 #     if train:
-#         transforms.append(T.ScaleJitter(target_size=(1024, 1024)))
-#         transforms.append(
-#             T.FixedSizeCrop(size=(1024, 1024), fill=(123.0, 117.0, 104.0))
-#         )
-#         transforms.append(T.RandomHorizontalFlip(p=0.5))
+#         transforms.append(T.RandomHorizontalFlip(0.5))
+#         if rnd_photometric_distort:
+#             transforms.append(
+#                 T.RandomPhotometricDistort(
+#                     contrast=(0.5, 1.5),
+#                     saturation=(0.5, 1.5),
+#                     hue=(-0.05, 0.05),
+#                     brightness=(0.875, 1.125),
+#                     p=0.5,
+#                 )
+#             )
+#         if scale_jitter:
+#             transforms.append(T.ScaleJitter((800, 1333)))
 #     return T.Compose(transforms)
+
+
+def _get_transform(train: bool):
+    transforms = []
+    if train:
+        transforms.append(T.ScaleJitter(target_size=(800, 1333)))
+        transforms.append(T.FixedSizeCrop(size=(800, 1333), fill=(123.0, 117.0, 104.0)))
+        transforms.append(T.RandomHorizontalFlip(p=0.5))
+    transforms.append(T.ToTensor())
+    return T.Compose(transforms)
