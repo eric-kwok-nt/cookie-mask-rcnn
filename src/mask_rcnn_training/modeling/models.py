@@ -2,6 +2,7 @@
 trained."""
 
 from torchvision.ops import misc as misc_nn_ops
+from torchvision.models import ResNet101_Weights
 from torchvision.models.detection import MaskRCNN
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
@@ -26,8 +27,9 @@ def maskrcnn_model(args):
         pretrained=True,
         norm_layer=misc_nn_ops.FrozenBatchNorm2d,
         trainable_layers=args["train"]["trainable_layers"],
+        weights=ResNet101_Weights.DEFAULT,
     )
-    # model = MaskRCNN(backbone, num_classes=91, _skip_resize=True)
     model = MaskRCNN(backbone, num_classes=91, _skip_resize=True)
+    # model = MaskRCNN(backbone, num_classes=91)
 
     return model
